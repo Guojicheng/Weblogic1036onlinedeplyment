@@ -1,0 +1,43 @@
+FROM centos:6.8
+MAINTAINER jicheng <guojc@wise2c.com>
+
+ADD jdk-6u45-linux-x64.bin /tpsys/weblogic/jdk-6u45-linux-x64.bin
+ADD silent.xml /tpsys/weblogic/weblogicinstall/silent.xml
+ADD create-wls-domain.py /tpsys/weblogic/weblogicinstall/
+ADD create_managed_server.py /tpsys/weblogic/weblogicinstall/
+ADD ManagedServer.properties /tpsys/weblogic/weblogicinstall/
+ADD register_managed_server.sh /tpsys/weblogic/weblogicinstall/
+ADD entrypoint.sh /
+ADD wls1036_generic.jar /tpsys/weblogic/weblogicinstall/
+
+# 编码设置
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+#查看语言支持列表
+RUN localedef --list-archive    #精简locale  \
+   && cd /usr/lib/locale/  && mv locale-archive locale-archive.old  && localedef -i en_US -f UTF-8 en_US.UTF-8  # 添加中文支持（可选） \   
+   && localedef -i zh_CN -f UTF-8 zh_CN.UTF-8  && localedef -i zh_CN -f GB2312 zh_CN  && localedef -i zh_CN -f GB2312 zh_CN.GB2312 && localedef -i zh_CN -f GBK zh_CN.GBK \#下面这些也是可选的，可以>丰富中文支持（香港/台湾/新加坡）\
+   && localedef -f UTF-8 -i zh_HK zh_HK.UTF-8 && localedef -f UTF-8 -i zh_TW zh_TW.UTF-8  && localedef -f UTF-8 -i zh_SG zh_SG.UTF-8  && localedef -i zh_CN -f GB18030 zh_CN.GB18030 ##安装jdk \ 
+   && mkdir -p /tpsys/weblogic  \
+   && mkdir -p /tpsys/weblogic/beainstall \
+   && chmod a+x  /tpsys/weblogic/jdk-6u45-linux-x64.bin  \
+   && chmod -R 755 /tpsys/weblogic 
+RUN cd /tpsys/weblogic &&  /bin/bash ./jdk-6u45-linux-x64.bin  \
+   && rm -rf /tpsys/weblogic/jdk-6u45-linux-x64.bin 
+
+ENV JAVA_HOME /tpsys/weblogic/jdk1.6.0_45
+ENV CLASSPATH ".:/tpsys/weblogic/jdk1.6.0_45/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+ENV PATH   $PATH:/tpsys/weblogic/jdk1.6.0_45/bin
+#ENV PATH $PATH:/=/tpsys/weblogic/jdk1.6.0_45/bin:/tpsys/weblogic/oracle_common/common/bin:/tpsys/weblogic/user_projects/domains/base_domain/bin
+
+
+#### install weblogic for slient mode , and create domain
+
+RUN /tpsys/weblogic/jdk1.6.0_45/bin/java  -jar /tpsys/weblogic/weblogicinstall/wls1036_generic.jar -mode=silent -silent_xml=/tpsys/weblogic/weblogicinstall/silent.xml -log=/tpsys/weblogic/weblogicinstall/silent.log 
+#  &&  rm /tpsys/weblogic/weblogicinstall/wls1036_generic.jar /tpsys/weblogic/weblogicinstall/silent.xml \
+RUN  chmod +x /entrypoint.sh && chmod +x /tpsys/weblogic/weblogicinstall/*.sh
+ENV CONFIG_JVM_ARGS '-Djava.security.egd=file:/dev/./urandom'
+WORKDIR /tpsys/weblogic
+CMD ["/entrypoint.sh"]

@@ -1,0 +1,33 @@
+//This is an example of a Configuration Wizard silent script. This example uses the
+// Basic WebLogic Server Domain template to show how to open, modify, and write out
+// a domain in silent mode. Please note that many values used in this script are subject
+// to change based on your WebLogic installation and the template you are using.
+//
+// Usage:
+//      <Windows> = config.cmd -mode=silent -silent_script=<silent script>
+//      <Unix>    = ./config.sh -mode=silent -silent_script=<silent script>
+//
+// Where:
+//      <silent script> should be the full path to the silent script.
+
+
+
+read template from "/tpsys/weblogic/wlserver_10.3/common/templates/domains/wls.jar";
+
+set ServerStartMode "prod";
+set JavaHome "/tpsys/weblogic/jdk1.6.0_45";
+
+
+
+///////////////////////////////////////
+// Write out the domain
+///////////////////////////////////////
+
+set OverwriteDomain "true";
+write domain to "/tpsys/weblogic/user_projects/domains/base_domain";
+
+///////////////////////////////////////
+// Close domain template to indicate completion of work
+///////////////////////////////////////
+
+close template;
